@@ -4,6 +4,7 @@
   "private": true,
   "description": "MAXMIND AI — unified AI workspace: bring your own API keys, real validation & model discovery, user-controlled routing and AI teams.",
   "main": "server.js",
+  "bin": { "maxmind-ai": "bin/maxmind.js" },
   "workspaces": ["packages/*"],
   "scripts": {
     "setup": "node scripts/ensure-env.js",
