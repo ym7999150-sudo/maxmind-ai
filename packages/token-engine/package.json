@@ -1,0 +1,10 @@
+{
+  "name": "@maxmind-ai/token-engine",
+  "version": "1.0.0",
+  "description": "MAXMIND AI token engine: estimation, context compression, rolling summary, relevant-history retrieval, lexical-similarity cache, budgets.",
+  "main": "src/index.js",
+  "exports": { ".": "./src/index.js" },
+  "files": ["src", "README.md", "LICENSE", "CHANGELOG.md"],
+  "engines": { "node": ">=20" },
+  "license": "MIT"
+}

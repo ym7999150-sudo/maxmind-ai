@@ -1,0 +1,19 @@
+{
+  "name": "maxmind-ai",
+  "version": "2.0.0",
+  "private": true,
+  "description": "MAXMIND AI — unified AI workspace: bring your own API keys, real validation & model discovery, user-controlled routing and AI teams.",
+  "main": "server.js",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "setup": "node scripts/ensure-env.js",
+    "start": "node scripts/ensure-env.js && node server.js",
+    "dev": "node scripts/ensure-env.js && DEV_MOCK=1 node server.js",
+    "test": "node --test --test-concurrency=1 \"test/*.test.js\"",
+    "pack:all": "npm pack --workspaces --pack-destination dist"
+  },
+  "engines": { "node": ">=22.13" },
+  "dependencies": { "express": "^4.19.2" },
+  "optionalDependencies": { "pdf-parse": "^1.1.1" },
+  "license": "MIT"
+}

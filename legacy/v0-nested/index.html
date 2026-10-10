@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MuxMind AI — Enterprise Orchestration Engine</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ===================== TOP NAVIGATION BAR ===================== -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span class="brand-name">MuxMind <em>AI</em></span>
+    </div>
+
+    <div class="topbar-controls">
+      <select id="model-selector-dropdown" title="اختر وضع التوجيه">
+        <option value="auto">توجيه ذكي (Auto Routing)</option>
+        <optgroup label="Anthropic">
+          <option value="anthropic:claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+        </optgroup>
+        <optgroup label="Google">
+          <option value="google:gemini-1.5-pro">Gemini 1.5 Pro</option>
+          <option value="google:gemini-1.5-flash">Gemini 1.5 Flash</option>
+        </optgroup>
+        <optgroup label="Groq">
+          <option value="groq:llama-3.3-70b-versatile">Groq Llama 3.3 70B</option>
+        </optgroup>
+        <optgroup label="OpenRouter">
+          <option value="openrouter:meta-llama/llama-3.1-70b-instruct">OpenRouter Llama 3.1</option>
+        </optgroup>
+        <optgroup label="Mistral">
+          <option value="mistral:mistral-large-latest">Mistral Large</option>
+        </optgroup>
+        <optgroup label="DeepSeek">
+          <option value="deepseek:deepseek-reasoner">DeepSeek R1</option>
+        </optgroup>
+      </select>
+
+      <button id="btn-providers" class="icon-btn" title="مزودو الذكاء الاصطناعي">🌐 المزودون</button>
+      <button id="btn-api-manager" class="icon-btn" title="إدارة مفاتيح API">🔑 المفاتيح</button>
+      <button id="btn-tts-toggle" class="icon-btn" data-state="mute" title="الصوت">🔇 صامت</button>
+      <button id="btn-clear-chat" class="icon-btn" title="مسح المحادثة">🗑️</button>
+    </div>
+  </header>
+
+  <!-- ===================== STATUS BAR ===================== -->
+  <div class="status-row">
+    <span id="status-badge">⚙️ Engine: — | Tokens Saved: —</span>
+    <div id="task-progress-bar"><div class="fill" id="task-progress-fill"></div></div>
+  </div>
+
+  <!-- ===================== CHAT AREA ===================== -->
+  <main id="chat-window" class="chat-window">
+    <div class="welcome-card">
+      <h1>مرحبًا بك في MuxMind AI</h1>
+      <p>محرك تنسيق متعدد المزودين — يوجّه كل طلب تلقائيًا إلى أفضل نموذج متاح (Claude، Gemini، Groq، OpenRouter، Mistral، DeepSeek).</p>
+      <p>ابدأ بإضافة مفاتيح API من زر <strong>🔑 المفاتيح</strong>، أو استعرض روابط المزودين من <strong>🌐 المزودون</strong>.</p>
+    </div>
+  </main>
+
+  <!-- ===================== INPUT TOOLBAR ===================== -->
+  <footer class="input-toolbar">
+    <input type="file" id="file-upload-input" accept=".js,.html,.css,.py,.pdf,.txt,.png,.jpg,.jpeg" hidden />
+    <button id="btn-attach" class="icon-btn" title="إرفاق ملف">📎</button>
+
+    <textarea id="user-prompt-input" placeholder="اكتب رسالتك هنا..." rows="1"></textarea>
+
+    <button id="btn-stop" class="icon-btn danger hidden" title="إيقاف التوليد">⏹️</button>
+    <button id="btn-send" class="send-btn" title="إرسال">➤</button>
+  </footer>
+
+</div>
+
+<!-- ===================== MODAL: PROVIDERS ===================== -->
+<div id="modal-providers" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>🌐 مزودو الذكاء الاصطناعي</h2>
+      <button class="modal-close" data-close="modal-providers">✕</button>
+    </div>
+    <p class="modal-sub">روابط رسمية لصفحات الـ API لكل مزود — نماذج مجانية وغير مجانية.</p>
+    <div id="providers-list" class="providers-list">
+      <!-- Populated dynamically by ui-render.js from GET /api/providers -->
+      <div class="loading-row">جارِ التحميل...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: API KEY MANAGER ===================== -->
+<div id="modal-api-manager" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>🔑 إدارة مفاتيح API</h2>
+      <button class="modal-close" data-close="modal-api-manager">✕</button>
+    </div>
+    <p class="modal-sub">أدخل مفتاحك لكل مزود، ثم اضغط "تحقق" لجلب النماذج المتاحة تلقائيًا.</p>
+    <div id="api-keys-list" class="api-keys-list">
+      <!-- Populated dynamically by ui-render.js -->
+      <div class="loading-row">جارِ التحميل...</div>
+    </div>
+  </div>
+</div>
+
+<script src="src/ui-render.js"></script>
+</body>
+</html>

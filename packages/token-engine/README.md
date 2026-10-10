@@ -1,0 +1,2 @@
+# @maxmind-ai/token-engine
+Local (zero extra API calls) context optimization: `buildContext` (recent window + rolling summary + relevant retrieval within `maxInputTokens`), `extendSummary`, `compressText`, `selectDocumentChunks`, lexical-similarity cache (`findCached`, Jaccard — not embeddings), `dedupeMessages`, and `estimateCost` (returns `null` when pricing is unknown). Token counts produced here are **estimates**; real usage comes from provider responses.

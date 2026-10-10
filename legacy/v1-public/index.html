@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MuxMind AI — Multi-Provider Intelligence Console</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          base: '#0a0b0f',
+          panel: '#12141c',
+          panel2: '#171a24',
+          accent: '#7c5cff',
+          accent2: '#22d3ee',
+          border: '#232635'
+        },
+        boxShadow: {
+          glow: '0 0 40px rgba(124,92,255,0.25)'
+        },
+        animation: {
+          'fade-in': 'fadeIn .35s ease forwards',
+          'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+          'bounce-dot': 'bounceDot 1.2s infinite ease-in-out'
+        },
+        keyframes: {
+          fadeIn: { '0%': { opacity: 0, transform: 'translateY(6px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+          pulseSoft: { '0%,100%': { opacity: 1 }, '50%': { opacity: .5 } },
+          bounceDot: { '0%,80%,100%': { transform: 'scale(0.6)', opacity: .4 }, '40%': { transform: 'scale(1)', opacity: 1 } }
+        }
+      }
+    }
+  };
+</script>
+
+<style>
+  * { scrollbar-width: thin; scrollbar-color: #34384a transparent; }
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
+  *::-webkit-scrollbar-thumb { background: #34384a; border-radius: 8px; }
+  body { background: radial-gradient(circle at 20% -10%, rgba(124,92,255,0.12), transparent 40%), radial-gradient(circle at 90% 10%, rgba(34,211,238,0.08), transparent 40%), #0a0b0f; }
+  .glass { background: rgba(23, 26, 36, 0.55); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border: 1px solid rgba(255,255,255,0.06); }
+  .glass-strong { background: rgba(18, 20, 28, 0.85); backdrop-filter: blur(22px) saturate(160%); -webkit-backdrop-filter: blur(22px) saturate(160%); border: 1px solid rgba(255,255,255,0.08); }
+  .msg-content pre { background: #0d0e14 !important; border: 1px solid #232635; border-radius: 10px; padding: 14px; overflow-x: auto; position: relative; margin: 10px 0; }
+  .msg-content code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.85em; }
+  .msg-content p { margin: 8px 0; line-height: 1.7; }
+  .msg-content ul, .msg-content ol { margin: 8px 0 8px 22px; }
+  .msg-content a { color: #22d3ee; text-decoration: underline; }
+  .copy-btn { position: absolute; top: 8px; right: 8px; font-size: 11px; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); opacity: 0; transition: opacity .15s; }
+  pre:hover .copy-btn { opacity: 1; }
+  .side-scroll::-webkit-scrollbar { width: 6px; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: linear-gradient(135deg,#7c5cff,#22d3ee); cursor: pointer; margin-top: -6px; box-shadow: 0 0 10px rgba(124,92,255,.6); }
+  input[type=range] { -webkit-appearance: none; height: 4px; border-radius: 4px; background: #232635; }
+  .modal-backdrop { background: rgba(5,6,10,0.7); backdrop-filter: blur(4px); }
+</style>
+</head>
+
+<body class="text-slate-200 min-h-screen flex overflow-hidden" style="height:100vh;">
+
+<!-- ================= SIDEBAR ================= -->
+<aside id="sidebar" class="w-72 shrink-0 glass-strong flex flex-col h-full border-r border-border transition-all duration-300 z-20">
+  <div class="p-4 flex items-center gap-3 border-b border-border">
+    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent2 flex items-center justify-center shadow-glow shrink-0">
+      <i class="fa-solid fa-brain text-white text-lg"></i>
+    </div>
+    <div class="min-w-0">
+      <h1 class="font-bold text-white text-sm tracking-wide truncate">MuxMind AI</h1>
+      <p class="text-[11px] text-slate-400 truncate">Multi-Provider Console</p>
+    </div>
+  </div>
+
+  <div class="p-3">
+    <button onclick="newChat()" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-accent to-accent2 hover:opacity-90 transition text-white text-sm font-semibold py-2.5 rounded-xl shadow-glow">
+      <i class="fa-solid fa-plus"></i> New Chat
+    </button>
+  </div>
+
+  <div class="px-3 pb-2">
+    <p class="text-[11px] uppercase tracking-wider text-slate-500 font-semibold px-1 mb-1">History</p>
+  </div>
+  <div id="historyList" class="flex-1 overflow-y-auto side-scroll px-3 space-y-1 pb-3"></div>
+
+  <div class="p-3 border-t border-border space-y-2">
+    <div class="flex items-center justify-between glass rounded-xl px-3 py-2">
+      <div class="flex items-center gap-2">
+        <span id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse-soft"></span>
+        <span id="statusText" class="text-xs font-medium text-slate-300">Checking...</span>
+      </div>
+      <i class="fa-solid fa-satellite-dish text-slate-500 text-xs"></i>
+    </div>
+    <button onclick="openSettings()" class="w-full flex items-center gap-2 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition rounded-xl px-3 py-2">
+      <i class="fa-solid fa-sliders w-4"></i> Settings
+    </button>
+  </div>
+</aside>
+
+<!-- ================= MAIN ================= -->
+<main class="flex-1 flex flex-col h-full min-w-0">
+
+  <!-- Top bar -->
+  <header class="glass-strong border-b border-border px-4 py-3 flex items-center justify-between gap-3 z-10">
+    <div class="flex items-center gap-3 min-w-0">
+      <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white transition p-2 rounded-lg hover:bg-white/5">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="flex items-center gap-2 min-w-0">
+        <span id="modelBadge" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-accent/15 text-accent border border-accent/30 truncate">
+          <i class="fa-solid fa-microchip mr-1"></i> OpenAI · gpt-4o-mini
+        </span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-1.5">
+      <button onclick="regenerate()" title="Regenerate last response" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition">
+        <i class="fa-solid fa-rotate-right"></i>
+      </button>
+      <button onclick="toggleTTS()" id="ttsBtn" title="Read aloud" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition">
+        <i class="fa-solid fa-volume-high"></i>
+      </button>
+      <div class="relative">
+        <button onclick="toggleExportMenu()" title="Export conversation" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition">
+          <i class="fa-solid fa-file-export"></i>
+        </button>
+        <div id="exportMenu" class="hidden absolute right-0 mt-2 w-44 glass-strong rounded-xl shadow-xl overflow-hidden border border-border">
+          <button onclick="exportChat('json')" class="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5 flex items-center gap-2"><i class="fa-solid fa-code w-4"></i> Export JSON</button>
+          <button onclick="exportChat('md')" class="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5 flex items-center gap-2"><i class="fa-brands fa-markdown w-4"></i> Export Markdown</button>
+        </div>
+      </div>
+      <button onclick="clearChat()" title="Clear chat" class="text-slate-400 hover:text-rose-400 p-2 rounded-lg hover:bg-white/5 transition">
+        <i class="fa-solid fa-trash-can"></i>
+      </button>
+      <button onclick="openSettings()" title="Settings" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Chat canvas -->
+  <div id="chatCanvas" class="flex-1 overflow-y-auto side-scroll px-4 md:px-0">
+    <div class="max-w-3xl mx-auto py-8 space-y-6" id="messages">
+      <div class="text-center py-20 animate-fade-in">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-accent to-accent2 flex items-center justify-center shadow-glow mb-5">
+          <i class="fa-solid fa-brain text-white text-2xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-white mb-2">Welcome to MuxMind AI</h2>
+        <p class="text-slate-400 max-w-md mx-auto text-sm">Route a single conversation across OpenAI, Anthropic, Gemini, Groq, DeepSeek, or your own custom endpoint. Configure your keys in Settings to begin.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Typing indicator -->
+  <div id="typingIndicator" class="hidden max-w-3xl mx-auto w-full px-4 md:px-0 pb-2">
+    <div class="flex items-center gap-2 glass rounded-2xl px-4 py-3 w-fit">
+      <span class="w-2 h-2 rounded-full bg-accent2 animate-bounce-dot" style="animation-delay:0s"></span>
+      <span class="w-2 h-2 rounded-full bg-accent2 animate-bounce-dot" style="animation-delay:.15s"></span>
+      <span class="w-2 h-2 rounded-full bg-accent2 animate-bounce-dot" style="animation-delay:.3s"></span>
+    </div>
+  </div>
+
+  <!-- Composer -->
+  <div class="border-t border-border glass-strong px-4 py-4">
+    <div class="max-w-3xl mx-auto">
+      <div class="glass rounded-2xl flex items-end gap-2 p-2 focus-within:shadow-glow transition-shadow">
+        <textarea id="promptInput" rows="1" placeholder="Message MuxMind AI..."
+          class="flex-1 bg-transparent resize-none outline-none text-sm px-3 py-2.5 max-h-40 placeholder:text-slate-500"></textarea>
+        <button onclick="sendMessage()" id="sendBtn"
+          class="bg-gradient-to-r from-accent to-accent2 hover:opacity-90 transition text-white w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-glow">
+          <i class="fa-solid fa-paper-plane text-sm"></i>
+        </button>
+      </div>
+      <p class="text-[11px] text-slate-500 text-center mt-2">MuxMind AI can make mistakes. Verify important information.</p>
+    </div>
+  </div>
+</main>
+
+<!-- ================= SETTINGS MODAL ================= -->
+<div id="settingsModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+  <div class="glass-strong w-full max-w-2xl rounded-2xl border border-border shadow-2xl max-h-[90vh] overflow-y-auto side-scroll animate-fade-in">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 glass-strong z-10">
+      <h3 class="font-bold text-white flex items-center gap-2"><i class="fa-solid fa-sliders text-accent"></i> Settings</h3>
+      <button onclick="closeSettings()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-white/5"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <div class="p-6 space-y-6">
+      <!-- Provider -->
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Active Provider</label>
+        <select id="providerSelect" class="w-full bg-panel2 border border-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-accent">
+          <option value="openai">OpenAI</option>
+          <option value="anthropic">Anthropic (Claude)</option>
+          <option value="gemini">Google Gemini</option>
+          <option value="groq">Groq</option>
+          <option value="deepseek">DeepSeek</option>
+          <option value="custom">Custom (OpenAI-compatible)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Model Name</label>
+        <input id="modelInput" type="text" placeholder="e.g. gpt-4o-mini, claude-sonnet-4-6, gemini-2.0-flash"
+          class="w-full bg-panel2 border border-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-accent" />
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">OpenAI API Key</label>
+          <input id="keyOpenai" type="password" placeholder="sk-..." class="w-full bg-panel2 border border-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-accent" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Anthropic API Key</label>
+          <input id="keyAnthropic" type="password" placeholder="sk-ant-..." class="w-full bg-panel2 border border-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-accent" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Gemini API Key</label>
+          <input id="keyGemini" type="password" placeholder="AIza..." class="w-full bg-panel2 border border-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-accent" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Groq API Key</label>
+          <input id="keyGroq" type="password" placeholder="gsk_..." class="w-full bg-panel2 border border-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-accent" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">DeepSeek API Key</label>
+          <input id="keyDeepseek" type="password" placeholder="sk-..." class="w-full bg-panel2 border border-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-accent" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Custom Base URL</label>
+          <input id="keyCustomUrl" type="text" placeholder="https://your-endpoint/v1" class="w-full bg-panel2 border border-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-accent" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Custom API Key (optional)</label>
+        <input id="keyCustom" type="password" placeholder="Bearer token for custom endpoint" class="w-full bg-panel2 border border-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-accent" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">System Prompt</label>
+        <textarea id="systemPrompt" rows="3" placeholder="You are a helpful, precise assistant..."
+          class="w-full bg-panel2 border border-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-accent resize-none"></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="flex justify-between text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+            <span>Temperature</span><span id="tempVal" class="text-accent2">0.7</span>
+          </label>
+          <input id="tempSlider" type="range" min="0" max="2" step="0.1" value="0.7" class="w-full" oninput="document.getElementById('tempVal').textContent = this.value" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Max Tokens</label>
+          <input id="maxTokens" type="number" value="2048" min="1" max="32000" class="w-full bg-panel2 border border-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-accent" />
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-border sticky bottom-0 glass-strong">
+      <button onclick="closeSettings()" class="px-4 py-2 rounded-xl text-sm text-slate-300 hover:bg-white/5">Cancel</button>
+      <button onclick="saveSettings()" class="px-5 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-accent to-accent2 text-white shadow-glow hover:opacity-90">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================== STATE =========================== */
+const DEFAULT_SETTINGS = {
+  provider: 'openai',
+  model: 'gpt-4o-mini',
+  systemPrompt: 'You are MuxMind AI, a helpful, precise, and friendly assistant.',
+  temperature: 0.7,
+  maxTokens: 2048,
+  keys: { openai: '', anthropic: '', gemini: '', groq: '', deepseek: '', custom: '' },
+  customUrl: ''
+};
+
+let settings = loadSettings();
+let sessions = JSON.parse(localStorage.getItem('muxmind_sessions') || '{}');
+let currentSessionId = null;
+let messages = [];
+let ttsEnabled = false;
+let isGenerating = false;
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem('muxmind_settings');
+    if (!raw) return structuredClone(DEFAULT_SETTINGS);
+    return { ...structuredClone(DEFAULT_SETTINGS), ...JSON.parse(raw) };
+  } catch (e) { return structuredClone(DEFAULT_SETTINGS); }
+}
+function persistSettings() { localStorage.setItem('muxmind_settings', JSON.stringify(settings)); }
+function persistSessions() { localStorage.setItem('muxmind_sessions', JSON.stringify(sessions)); }
+
+/* =========================== INIT =========================== */
+window.addEventListener('DOMContentLoaded', () => {
+  hydrateSettingsForm();
+  renderHistory();
+  checkHealth();
+  newChat(true);
+
+  const ta = document.getElementById('promptInput');
+  ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 160) + 'px'; });
+  ta.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('exportMenu');
+    if (!menu.contains(e.target) && !e.target.closest('button[onclick="toggleExportMenu()"]')) menu.classList.add('hidden');
+  });
+});
+
+async function checkHealth() {
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  try {
+    const r = await fetch('/api/health');
+    if (r.ok) { dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse-soft'; text.textContent = 'Online'; }
+    else throw new Error('bad status');
+  } catch (e) {
+    dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse-soft';
+    text.textContent = 'Local Only';
+  }
+}
+
+/* =========================== SIDEBAR / SESSIONS =========================== */
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  sb.classList.toggle('hidden');
+}
+
+function newChat(silent) {
+  currentSessionId = 'sess_' + Date.now();
+  messages = [];
+  renderMessages();
+  if (!silent) {}
+  updateModelBadge();
+}
+
+function saveCurrentSession() {
+  if (!currentSessionId || messages.length === 0) return;
+  const title = (messages.find(m => m.role === 'user')?.content || 'New chat').slice(0, 40);
+  sessions[currentSessionId] = { id: currentSessionId, title, messages, updatedAt: Date.now() };
+  persistSessions();
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const entries = Object.values(sessions).sort((a, b) => b.updatedAt - a.updatedAt);
+  if (entries.length === 0) {
+    list.innerHTML = '<p class="text-xs text-slate-600 px-2 py-4 text-center">No conversations yet</p>';
+    return;
+  }
+  list.innerHTML = entries.map(s => `
+    <button onclick="loadSession('${s.id}')" class="w-full text-left px-3 py-2.5 rounded-xl text-xs text-slate-300 hover:bg-white/5 transition flex items-center gap-2 group ${s.id === currentSessionId ? 'bg-white/5 border border-accent/30' : ''}">
+      <i class="fa-regular fa-message text-slate-500 shrink-0"></i>
+      <span class="truncate flex-1">${escapeHtml(s.title)}</span>
+      <i class="fa-solid fa-trash text-slate-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition" onclick="event.stopPropagation(); deleteSession('${s.id}')"></i>
+    </button>
+  `).join('');
+}
+
+function loadSession(id) {
+  if (!sessions[id]) return;
+  currentSessionId = id;
+  messages = sessions[id].messages;
+  renderMessages();
+  renderHistory();
+}
+
+function deleteSession(id) {
+  delete sessions[id];
+  persistSessions();
+  renderHistory();
+  if (currentSessionId === id) newChat(true);
+}
+
+/* =========================== SETTINGS MODAL =========================== */
+function openSettings() { hydrateSettingsForm(); document.getElementById('settingsModal').classList.remove('hidden'); }
+function closeSettings() { document.getElementById('settingsModal').classList.add('hidden'); }
+
+function hydrateSettingsForm() {
+  document.getElementById('providerSelect').value = settings.provider;
+  document.getElementById('modelInput').value = settings.model;
+  document.getElementById('systemPrompt').value = settings.systemPrompt;
+  document.getElementById('tempSlider').value = settings.temperature;
+  document.getElementById('tempVal').textContent = settings.temperature;
+  document.getElementById('maxTokens').value = settings.maxTokens;
+  document.getElementById('keyOpenai').value = settings.keys.openai;
+  document.getElementById('keyAnthropic').value = settings.keys.anthropic;
+  document.getElementById('keyGemini').value = settings.keys.gemini;
+  document.getElementById('keyGroq').value = settings.keys.groq;
+  document.getElementById('keyDeepseek').value = settings.keys.deepseek;
+  document.getElementById('keyCustom').value = settings.keys.custom;
+  document.getElementById('keyCustomUrl').value = settings.customUrl;
+}
+
+function saveSettings() {
+  settings.provider = document.getElementById('providerSelect').value;
+  settings.model = document.getElementById('modelInput').value.trim();
+  settings.systemPrompt = document.getElementById('systemPrompt').value;
+  settings.temperature = parseFloat(document.getElementById('tempSlider').value);
+  settings.maxTokens = parseInt(document.getElementById('maxTokens').value, 10) || 2048;
+  settings.keys.openai = document.getElementById('keyOpenai').value.trim();
+  settings.keys.anthropic = document.getElementById('keyAnthropic').value.trim();
+  settings.keys.gemini = document.getElementById('keyGemini').value.trim();
+  settings.keys.groq = document.getElementById('keyGroq').value.trim();
+  settings.keys.deepseek = document.getElementById('keyDeepseek').value.trim();
+  settings.keys.custom = document.getElementById('keyCustom').value.trim();
+  settings.customUrl = document.getElementById('keyCustomUrl').value.trim();
+  persistSettings();
+  updateModelBadge();
+  closeSettings();
+}
+
+function updateModelBadge() {
+  const badge = document.getElementById('modelBadge');
+  const names = { openai: 'OpenAI', anthropic: 'Anthropic', gemini: 'Gemini', groq: 'Groq', deepseek: 'DeepSeek', custom: 'Custom' };
+  badge.innerHTML = `<i class="fa-solid fa-microchip mr-1"></i> ${names[settings.provider]} · ${settings.model || 'default'}`;
+}
+
+/* =========================== CHAT LOGIC =========================== */
+function renderMessages() {
+  const container = document.getElementById('messages');
+  if (messages.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-20 animate-fade-in">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-accent to-accent2 flex items-center justify-center shadow-glow mb-5">
+          <i class="fa-solid fa-brain text-white text-2xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-white mb-2">Welcome to MuxMind AI</h2>
+        <p class="text-slate-400 max-w-md mx-auto text-sm">Route a single conversation across OpenAI, Anthropic, Gemini, Groq, DeepSeek, or your own custom endpoint. Configure your keys in Settings to begin.</p>
+      </div>`;
+    return;
+  }
+  container.innerHTML = messages.map((m, idx) => renderBubble(m, idx)).join('');
+  hljs.highlightAll();
+  attachCopyButtons();
+  scrollToBottom();
+}
+
+function renderBubble(m, idx) {
+  const isUser = m.role === 'user';
+  const html = isUser ? escapeHtml(m.content).replace(/\n/g, '<br>') : marked.parse(m.content || '');
+  return `
+    <div class="flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in">
+      <div class="flex gap-3 max-w-[85%] ${isUser ? 'flex-row-reverse' : ''}">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isUser ? 'bg-slate-700' : 'bg-gradient-to-br from-accent to-accent2'}">
+          <i class="fa-solid ${isUser ? 'fa-user' : 'fa-brain'} text-white text-xs"></i>
+        </div>
+        <div class="rounded-2xl px-4 py-3 text-[15px] leading-relaxed ${isUser ? 'bg-accent/20 border border-accent/30' : 'glass'} msg-content">
+          ${html}
+          ${!isUser ? `<div class="flex items-center gap-2 mt-2 pt-2 border-t border-white/5">
+            <button onclick="speakMessage(${idx})" class="text-[11px] text-slate-500 hover:text-accent2 transition"><i class="fa-solid fa-volume-high"></i></button>
+            <button onclick="copyMessage(${idx})" class="text-[11px] text-slate-500 hover:text-accent2 transition"><i class="fa-solid fa-copy"></i></button>
+            <button onclick="regenerateFrom(${idx})" class="text-[11px] text-slate-500 hover:text-accent2 transition"><i class="fa-solid fa-code-branch"></i></button>
+          </div>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function attachCopyButtons() {
+  document.querySelectorAll('.msg-content pre').forEach((pre) => {
+    if (pre.querySelector('.copy-btn')) return;
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copy';
+    btn.onclick = () => {
+      const code = pre.querySelector('code')?.innerText || pre.innerText;
+      navigator.clipboard.writeText(code);
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+      setTimeout(() => (btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copy'), 1500);
+    };
+    pre.style.position = 'relative';
+    pre.appendChild(btn);
+  });
+}
+
+function scrollToBottom() {
+  const c = document.getElementById('chatCanvas');
+  c.scrollTop = c.scrollHeight;
+}
+
+async function sendMessage() {
+  if (isGenerating) return;
+  const input = document.getElementById('promptInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  messages.push({ role: 'user', content: text });
+  input.value = '';
+  input.style.height = 'auto';
+  renderMessages();
+  await requestCompletion();
+}
+
+async function requestCompletion() {
+  isGenerating = true;
+  document.getElementById('typingIndicator').classList.remove('hidden');
+  document.getElementById('sendBtn').disabled = true;
+  scrollToBottom();
+
+  const provider = settings.provider;
+  const apiKey = provider === 'custom' ? settings.keys.custom : settings.keys[provider];
+
+  try {
+    const resp = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        provider,
+        apiKey,
+        model: settings.model,
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
+        temperature: settings.temperature,
+        maxTokens: settings.maxTokens,
+        systemPrompt: settings.systemPrompt,
+        baseUrl: provider === 'custom' ? settings.customUrl : undefined
+      })
+    });
+
+    const data = await resp.json();
+    if (!resp.ok) {
+      throw new Error(data?.error?.message || 'Request failed');
+    }
+    messages.push({ role: 'assistant', content: data.content || '(empty response)' });
+  } catch (err) {
+    messages.push({ role: 'assistant', content: `⚠️ **Error:** ${escapeHtml(err.message)}\n\nCheck your API key and settings, then try again.` });
+  } finally {
+    isGenerating = false;
+    document.getElementById('typingIndicator').classList.add('hidden');
+    document.getElementById('sendBtn').disabled = false;
+    renderMessages();
+    saveCurrentSession();
+    if (ttsEnabled) speakMessage(messages.length - 1);
+  }
+}
+
+function regenerate() {
+  if (messages.length === 0 || isGenerating) return;
+  while (messages.length && messages[messages.length - 1].role === 'assistant') messages.pop();
+  if (messages.length === 0) return;
+  renderMessages();
+  requestCompletion();
+}
+
+function regenerateFrom(idx) {
+  if (isGenerating) return;
+  messages = messages.slice(0, idx);
+  renderMessages();
+  requestCompletion();
+}
+
+function clearChat() {
+  if (!confirm('Clear the current conversation?')) return;
+  messages = [];
+  renderMessages();
+}
+
+/* =========================== EXPORT =========================== */
+function toggleExportMenu() { document.getElementById('exportMenu').classList.toggle('hidden'); }
+
+function exportChat(format) {
+  toggleExportMenu();
+  if (messages.length === 0) return alert('Nothing to export yet.');
+  let blob, filename;
+  if (format === 'json') {
+    blob = new Blob([JSON.stringify({ provider: settings.provider, model: settings.model, messages }, null, 2)], { type: 'application/json' });
+    filename = `muxmind-chat-${Date.now()}.json`;
+  } else {
+    const md = messages.map(m => `### ${m.role === 'user' ? '🧑 User' : '🤖 Assistant'}\n\n${m.content}\n`).join('\n---\n\n');
+    blob = new Blob([md], { type: 'text/markdown' });
+    filename = `muxmind-chat-${Date.now()}.md`;
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* =========================== TTS =========================== */
+function toggleTTS() {
+  ttsEnabled = !ttsEnabled;
+  const btn = document.getElementById('ttsBtn');
+  btn.classList.toggle('text-accent2', ttsEnabled);
+  btn.classList.toggle('text-slate-400', !ttsEnabled);
+  if (!ttsEnabled) speechSynthesis.cancel();
+}
+
+function speakMessage(idx) {
+  const m = messages[idx];
+  if (!m) return;
+  speechSynthesis.cancel();
+  const plain = m.content.replace(/```[\s\S]*?```/g, ' code block omitted ').replace(/[#*_`>]/g, '');
+  const utter = new SpeechSynthesisUtterance(plain);
+  utter.rate = 1.02;
+  speechSynthesis.speak(utter);
+}
+
+function copyMessage(idx) {
+  const m = messages[idx];
+  if (!m) return;
+  navigator.clipboard.writeText(m.content);
+}
+
+/* =========================== UTIL =========================== */
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>
